@@ -8,6 +8,13 @@ from operator import index
 screen = turtle.Screen()
 import pandas as pd
 
+#CONSTANTS
+
+guess_prompt = "Input your state guess?"
+guess_again = "Already entered, guess again!"
+
+
+
 # Set up the screen
 screen.title("The Great State Chase!")
 image = "blank_states_img.gif"
@@ -15,7 +22,7 @@ screen.addshape(image)
 turtle.shape(image)
 
 # Lists and constants
-state_check = []
+state_check = ['Ohio']
 
 
 # I will set up definitions here ready for object implementation later
@@ -30,31 +37,32 @@ def get_states():
     return st_data
 
 
-def check_entry(answer_state):  # Check whether state already input
+def repeat_entry(answer_state):  # Check whether state already input
 
     for index in range(len(state_check)):
         if state_check[index] == answer_state:
             return True
 
+def not_usa_state():
+
 
 # Main programme starts here
-
-guess_prompt = "Input your state guess?"
-guess_again = "Already entered, guess again!"
-
-state_data = get_states()
+state_data = get_states() # gets the data from pandas read of 50 States.csv
 print(state_data)
 game_on = True
 found = False  # check on previous entries
+
 while game_on:
     answer_state = box_prompt(guess_prompt)  # prompts for first entry
-    input_check = check_entry(answer_state)
+    print(f"This is the input state: {answer_state}")
+    input_check = repeat_entry(answer_state)
 
     if input_check:  # checks output from the state entry check, if true prompts new entry
         state_check.append(answer_state)
         print(state_check)
         screen.textinput(title="Guess a State", prompt=guess_again).lower().capitalize()
-    else: # now I need to read the file for the position
+    else:
+
 
 # if answer_state in state_data['state'].values:
 
