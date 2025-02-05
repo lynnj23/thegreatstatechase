@@ -1,17 +1,15 @@
 """This is a Quiz game to guess the 50 states of the USA and then place them on a map
 It mainly tests your PANDAS ability to read a file then use SCREEN method to populate a map"""
 
+
 # Imports and definitions
 import turtle
-from tkinter import Image
-
-
-
+from PIL import Image
+import pandas as pd
 
 # from operator import index
 
 screen = turtle.Screen()
-import pandas as pd
 
 #CONSTANTS
 
@@ -22,14 +20,16 @@ GAME_OVER = "GAME OVER"
 # set up file
 
 image = Image.open("blank_states_img.gif")
-width, height = image.size
-print(f"Image width: {width} pixels, Image height: {height} pixels")
+image_width, image_height = image.size
+
 
 # Set up the screen
 screen.title("The Great State Chase!")
-screen.setup(width=725, height=491)
-screen.addshape(image)
-turtle.shape(image)
+screen.setup(width=image_width, height=image_height)
+screen.bgpic("blank_states_img.gif")
+screen.setworldcoordinates(-362.5, -245.5, 362.5, 245.5)
+#screen.addshape(image)
+#turtle.shape(image)
 
 # Lists and constants
 state_check = []
@@ -41,7 +41,7 @@ def get_states():
     return st_data
 
 
-def box_prompt(guess_prompt, score):
+def box_prompt(GUESS_PROMPT, score):
     answer_state = screen.textinput(title=f"Guess a State Score: {score}", prompt=GUESS_PROMPT).lower().capitalize()
     return answer_state
 
@@ -49,6 +49,8 @@ def repeat_entry(answer_state):  # Check whether state already input
     for index in range(len(state_check)):
         if state_check[index] == answer_state:
             return True
+        else:
+            return False
 
 def not_usa_state(answer_state) -> object:  # This is a further trap error
     unmatched_state = state_data[state_data['state'] == answer_state]
@@ -57,9 +59,9 @@ def not_usa_state(answer_state) -> object:  # This is a further trap error
 
 def place_state(state_data, answer_state): # Places the input State onto the map
     for x in range(len(state_data)):
-        print(f"Trap 3 This is the value of x = {x}")
+        # print(f"Trap 3 This is the value of x = {x}")
         row = state_data.iloc[x]  # Gets the matching state row from state_data dataframe
-        print(f"Trap 4 - This is value of row {row}")
+        # print(f"Trap 4 - This is value of row {row}")
         # Extract the values from the row
         if row["state"] == answer_state:
             # print(f"Trap 5 - We are in the IF statement comparing row and answer state")
@@ -67,16 +69,17 @@ def place_state(state_data, answer_state): # Places the input State onto the map
             # print(f"Trap 6 the value of state_name only {state_name}")
             x_coordinate = int(row['x'])
             y_coordinate = int(row['y'])
-            print(f"Trap 11 These are the next x and y co-ords {x_coordinate, y_coordinate}")
+            # print(f"Trap 11 These are the next x and y co-ords {x_coordinate, y_coordinate}")
             turtle.penup()
+            turtle.hideturtle()
             turtle.goto(x_coordinate, y_coordinate)
-            turtle.write(state_name, align="center", font=("Ariel", 8, "normal"))
+            turtle.write(state_name, align="center", font=("Arial", 8, "normal"))
     return
 
 
 # Main programme starts here
 state_data = get_states()  # gets the data from pandas read of 50 States.csv
-print(state_data)  # remove at end of programming
+# print(state_data)  # remove at end of programming
 game_on = True
 score = 0 
 # found = False  # check on previous entries
@@ -94,18 +97,19 @@ while game_on:
     if repeat_state:  # checks output from the state entry check, if true prompts new entry
         state_check.append(answer_state)
         screen.textinput(title=f"Guess a State Score:{score}", prompt=GUES_AGAIN).lower().capitalize()
+
     elif not_state.empty:
         screen.textinput(title=f"Guess a State Score:{score}", prompt=NOT_US_STATE).lower().capitalize()
     else:
         place_state(state_data,answer_state)
-        score += 1
+        score = len(sorted(set(answer_state)))
 
     # now check to see if the game is over by comparing states input with state_data
     all_states = set(state_data['state'])
     unique_guessed_states = sorted(set(state_check))
     if unique_guessed_states == all_states:
-        print("Trap 10 - got here")
-        Game_on: bool = False
+        # print("Trap 10 - got here")
+        game_on: bool = False
 
-answer_state = screen.textinput(title="Guess a State", prompt=GAME_OVER).lower().capitalize()
+screen.textinput(title="Game Over", prompt=GAME_OVER)
 turtle.mainloop()
