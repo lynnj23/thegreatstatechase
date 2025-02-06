@@ -1,7 +1,6 @@
 """This is a Quiz game to guess the 50 states of the USA and then place them on a map
 It mainly tests your PANDAS ability to read a file then use SCREEN method to populate a map"""
 
-
 # Imports and definitions
 import turtle
 from PIL import Image
@@ -17,11 +16,11 @@ GUESS_PROMPT = "Input your state guess?"
 GUES_AGAIN = "Already entered, guess again!"
 NOT_US_STATE = "Not a USA State!, guess again!"
 GAME_OVER = "GAME OVER"
+FILE_PATH = r"C:\Users\rljam\PycharmProjects\pythonProject\Day_25_States_Quiz\learn_these_states.csv"
 # set up file
 
 image = Image.open("blank_states_img.gif")
 image_width, image_height = image.size
-
 
 # Set up the screen
 screen.title("The Great State Chase!")
@@ -42,34 +41,34 @@ def get_states():
 
 
 def box_prompt(GUESS_PROMPT, score):
-    answer_state = screen.textinput(title=f"Guess a State Score: {score}", prompt=GUESS_PROMPT).lower().capitalize()
+    answer_state = screen.textinput(title=f"Guess a State! Score:{score} /50", prompt=GUESS_PROMPT).title()
     return answer_state
+
 
 def repeat_entry(answer_state):  # Check whether state already input
     for index in range(len(state_check)):
         if state_check[index] == answer_state:
-            return True
+            answer_state = screen.textinput(title=f"Guess a State, Score:{score} /50", prompt=GUES_AGAIN).title()
         else:
             return False
 
-def not_usa_state(answer_state) -> object:  # This is a further trap error
-    unmatched_state = state_data[state_data['state'] == answer_state]
-    #print(f"TEST OUTPUT Unmatched_state - {unmatched_state}")
-    return unmatched_state
+def not_usa_state(answer_state: str) -> bool:
+    # Check if the answer_state is NOT in the state_data DataFrame
+    if answer_state not in state_data['state'].values:
+        screen.textinput(title=f"Guess a State, Score: {score} / 50", prompt=f"{answer_state} is not a US state!")
+        return True
+    return False
 
-def place_state(state_data, answer_state): # Places the input State onto the map
+
+
+def place_state(state_data, answer_state):  # Places the input State onto the map
     for x in range(len(state_data)):
-        # print(f"Trap 3 This is the value of x = {x}")
         row = state_data.iloc[x]  # Gets the matching state row from state_data dataframe
-        # print(f"Trap 4 - This is value of row {row}")
         # Extract the values from the row
         if row["state"] == answer_state:
-            # print(f"Trap 5 - We are in the IF statement comparing row and answer state")
             state_name = row['state']
-            # print(f"Trap 6 the value of state_name only {state_name}")
             x_coordinate = int(row['x'])
             y_coordinate = int(row['y'])
-            # print(f"Trap 11 These are the next x and y co-ords {x_coordinate, y_coordinate}")
             turtle.penup()
             turtle.hideturtle()
             turtle.goto(x_coordinate, y_coordinate)
@@ -79,37 +78,33 @@ def place_state(state_data, answer_state): # Places the input State onto the map
 
 # Main programme starts here
 state_data = get_states()  # gets the data from pandas read of 50 States.csv
-# print(state_data)  # remove at end of programming
 game_on = True
-score = 0 
+score = 0
 # found = False  # check on previous entries
 
 
 while game_on:
-
+    # TODO This whole error trap is messy and logically error prone - correct
     answer_state = box_prompt(GUESS_PROMPT, score)  # prompts for first entry
-    # print(f"Trap #1 - This is the input state: {answer_state}")
     # two input error trap tests
-
-    repeat_state = repeat_entry(answer_state)  # sends for the repeat entry procedure
-    not_state = not_usa_state(answer_state)  # sends for the test 'not a USA state' procedure
-
-    if repeat_state:  # checks output from the state entry check, if true prompts new entry
-        state_check.append(answer_state)
-        screen.textinput(title=f"Guess a State Score:{score}", prompt=GUES_AGAIN).lower().capitalize()
-
-    elif not_state.empty:
-        screen.textinput(title=f"Guess a State Score:{score}", prompt=NOT_US_STATE).lower().capitalize()
+    if answer_state != "exit" or "Exit":
+        repeat_state = repeat_entry(answer_state)  # sends for the repeat entry procedure: Repeat_State = False
+        not_state = not_usa_state(answer_state)  # sends for the test 'not a USA state' procedure
+        if repeat_state == False or not_state == False:  # checks output from the state entry check, if true prompts new entry
+            state_check.append(answer_state)
+            place_state(state_data, answer_state)
+            score = len(sorted(set(answer_state)))
     else:
-        place_state(state_data,answer_state)
-        score = len(sorted(set(answer_state)))
+        all_states = set(state_data['state'])
+        # now check to see if the game is over by comparing states input with state_data
+        unique_guessed_states = sorted(set(state_check))
+        if unique_guessed_states == all_states:
+            game_on = False
+            screen.textinput(title="Game Over", prompt=GAME_OVER)
 
-    # now check to see if the game is over by comparing states input with state_data
-    all_states = set(state_data['state'])
-    unique_guessed_states = sorted(set(state_check))
-    if unique_guessed_states == all_states:
-        # print("Trap 10 - got here")
-        game_on: bool = False
+    # I want to look at the unique set of states input compare to All state to identify missing states.
+    missed_states = state_data[state_data["state"].isin(state_check)]
+    # capture the missing states in a CSV file and output
+    missed_states.to_csv(FILE_PATH, index = False)
 
-screen.textinput(title="Game Over", prompt=GAME_OVER)
-turtle.mainloop()
+
